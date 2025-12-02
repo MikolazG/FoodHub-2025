@@ -252,6 +252,33 @@ builder.Services.AddCors(options =>
                 .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
         }
     });
+
+    // Configure CORS specifically for SignalR to allow SignalR-specific headers
+    options.AddPolicy("SignalRPolicy", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy
+                .SetIsOriginAllowed(_ => true)
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+        }
+        else
+        {
+            policy
+                .WithOrigins(
+                    "https://foodhub.marcelpeterson.me",
+                    "https://www.foodhub.marcelpeterson.me",
+                    "https://foodhub-project.vercel.app",
+                    "http://localhost:3000",
+                    "http://localhost:3001"
+                )
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+        }
+    });
 });
 
 var app = builder.Build();
@@ -288,14 +315,19 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 app.UseIpRateLimiting();
 
+// Apply CORS early and before route mapping
+app.UseCors("DefaultPolicy");
+
 // Use custom CORS middleware for better reverse proxy compatibility
 app.UseMiddleware<CorsMiddleware>();
-app.UseCors("DefaultPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
+
+// Map SignalR hub with SignalR CORS policy BEFORE MapControllers
+app.MapHub<api.Hubs.ChatHub>("/chathub").RequireCors("SignalRPolicy");
 
 app.MapControllers();
 app.MapHealthChecks("/health");
@@ -307,8 +339,5 @@ app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthC
 {
     Predicate = _ => false
 });
-
-// Map SignalR hub
-app.MapHub<api.Hubs.ChatHub>("/chathub");
 
 app.Run();
