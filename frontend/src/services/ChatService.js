@@ -13,7 +13,7 @@ class ChatService {
     if (this.connection) {
       await this.disconnect();
     }    this.connection = new signalR.HubConnectionBuilder()
-      .withUrl('https://api.marcelpeterson.me/chathub', {
+      .withUrl('https://localhost:5001/chathub', {
         accessTokenFactory: () => token,
         transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling,
         withServerTimeoutInMilliseconds: 30000, // Increase the server timeout to 30 seconds

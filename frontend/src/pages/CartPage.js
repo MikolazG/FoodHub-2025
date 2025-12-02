@@ -17,11 +17,9 @@ function CartPage() {
 
   const handleCheckout = () => {
     if (!isAuthenticated()) {
-      // Redirect to login page if not authenticated
       navigate('/login', { state: { from: '/cart' } })
       return
     }
-    // Show the checkout modal for authenticated users
     setShowCheckoutModal(true)
   }
 
